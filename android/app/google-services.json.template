@@ -1,0 +1,50 @@
+{
+  "project_info": {
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "YOUR_PROJECT_ID",
+    "storage_bucket": "YOUR_PROJECT_ID.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_ANDROID_PACKAGE_NAME",
+        "android_client_info": {
+          "package_name": "YOUR_ANDROID_PACKAGE_NAME"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "YOUR_WEB_CLIENT_ID",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "YOUR_FIREBASE_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "YOUR_WEB_CLIENT_ID",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+
+<!-- 
+INSTRUCTIONS:
+1. Go to Firebase Console: https://console.firebase.google.com/
+2. Select your project
+3. Go to Project Settings (gear icon)
+4. Under "Your apps", add Android app
+5. Enter your package name (e.g., com.falso.app)
+6. Download google-services.json
+7. Replace this template file with the downloaded file
+-->

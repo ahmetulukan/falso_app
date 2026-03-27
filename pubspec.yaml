@@ -21,6 +21,7 @@ dependencies:
   cached_network_image: ^3.3.1
   flutter_animate: ^4.3.0
   shimmer: ^3.0.0
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +34,7 @@ flutter:
     - assets/images/
     - assets/animations/
     - assets/sounds/
+    - .env
 
   fonts:
     - family: Inter
