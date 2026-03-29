@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/match.dart';
@@ -114,7 +115,7 @@ class ApiService {
             return cachedFixtures.map((fixture) => Match.fromJson(fixture)).toList();
           }
         }
-        return []; // Return empty but do not overwrite cache with empty
+        throw Exception('API Limitine ulaşıldı veya sunucu hatası: $errors');
       }
 
       final List<dynamic> fixtures = data['response'] ?? [];

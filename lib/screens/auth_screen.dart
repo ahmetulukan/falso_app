@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 
@@ -59,6 +60,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     setState(() { _isLoading = true; _error = ''; });
 
     try {
+      if (Firebase.apps.isEmpty) {
+        setState(() => _error = 'Firebase bağlantısı kurulamadı. Lütfen uygulamayı yeniden başlatın.');
+        return;
+      }
       final auth = FirebaseAuth.instance;
       if (_isLogin) {
         await auth.signInWithEmailAndPassword(email: email, password: pass);

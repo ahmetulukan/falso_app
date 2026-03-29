@@ -39,7 +39,7 @@ Aşağıdaki geliştirmelerin **tamamı** bizim tarafımızdan eklenmiş ve gün
 Ahmet Bey (Kullanıcı) özellikle **kendi inisiyatifini alarak** projede kalite kontrolü yapmanı ve şu doğrultuda hareket etmeni istiyor:
 
 ### 1- İnisiyaif Alarak Hata Yakalama (Bug Triage & Edge Cases)
-Kullanıcının senden beklediği en devasa adım "proaktif test". Şunları bizzat denemelisin ve çalışmıyorsa düzeltmelisin:
+Kullanıcının senden beklediği en devasa adım "proaktif test". Örnek olarak aşağıdakiler gibi durumları bizzat denemelisin ve çalışmıyorsa düzeltmelisin, ancak sadece bu maddelerle sınırlı kalma. Aşağıdaki maddeler örnek olması adına yazıldı.
 - **Login/Logout Akışı:** Login ekranında kayıt olunca hata çıkıyor mu? Login olduktan sonra çıkış yapma butonu çalışıyor mu? Profil sayfasında veri gözüküyor mu? Hata varsa beklemeden sorunu çöz.
 - **Fikstür API Verisi:** Yarın ve ondan 1 hafta sonrasının fikstürüne tıklandığında maçlar harfiyen yükleniyor mu? Hata dönüyorsa veya maçlar kayboluyorsa `api_service` veya `score_prediction_screen` testlerini yeniden yaz.
 - **Cache Kırılmaları:** 100 API limiti dolduğunda uygulamanın ne kadar zarif çöktüğünü (graceful degradation) kontrol et.
@@ -48,7 +48,7 @@ Kullanıcının senden beklediği en devasa adım "proaktif test". Şunları biz
 Artık mimari ayakta. Arayüze "Premium" bir hissiyat katmak sana kaldı:
 - **Liderlik Tablosu (Leaderboard):** Veritabanındaki `users` koleksiyonundan puanı çekip sıralayan gerçek zamanlı şık bir liste yapıp Ana Ekrana entegre edebilirsin.
 - **Görsel Cila (UI Polish):** Yüklenme durumları için (loading) shimmer efektleri, oyun içi maç sonuçlarında konfeti animasyonları (Lottie tavsiye edilir) veya menü geçişlerinde Flutter'ın Hero/Fade animasyonlarını ekler misin?
-- **Transfer Zinciri Eksikliği:** Trivia, Lineup, Penaltı, Şehir tamam. Ancak "Transfer Chain" kısmını tam bitiremedik veya detaylandıramadık. Orayı daha oynanabilir realistik bir guessing formuna sokabilirsin.
+- **Transfer Zinciri Eksikliği:** Trivia, Lineup, Penaltı, Şehir gibi özellikler geliştirildi ama eksikler var. Mesela şehir haritaları eksik ve detaylı değil. Bu gibi geliştirmeleri de unutma. Ayrıca "Transfer Chain" kısmını tam bitiremedik veya detaylandıramadık. Orayı daha oynanabilir realistik bir guessing formuna sokabilirsin.
 
 ### 3- Derleme ve Build (En Önemlisi!)
 - Tüm geliştirmelerin bittikten sonra projeyi `flutter analyze` ile kontrol edip derleme hatası **olmadığından** kesinlikle emin olmalısın. Kullanıcı açtığında tek seferde build alabilmeli.
