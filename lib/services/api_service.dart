@@ -107,7 +107,7 @@ class ApiService {
       // Check for API-Football specific errors (like rate limit) even on 200 OK
       final errors = data['errors'];
       if (errors != null && ((errors is Map && errors.isNotEmpty) || (errors is List && errors.isNotEmpty))) {
-        debugPrint('API Error: $errors');
+        // debugPrint('API Error: $errors');
         final cachedData = await _cacheService.getFromCache(cacheKey, dataType);
         if (cachedData != null) {
           final List<dynamic> cachedFixtures = cachedData['response'] ?? [];

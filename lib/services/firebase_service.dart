@@ -13,7 +13,7 @@ class FirebaseService {
       );
       return credential.user;
     } catch (e) {
-      print('Sign in error: $e');
+      // print('Sign in error: $e');
       return null;
     }
   }
@@ -26,7 +26,7 @@ class FirebaseService {
       );
       return credential.user;
     } catch (e) {
-      print('Sign up error: $e');
+      // print('Sign up error: $e');
       return null;
     }
   }

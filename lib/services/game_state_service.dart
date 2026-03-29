@@ -31,7 +31,7 @@ class GameStateService {
         _nickname = _currentUser!.displayName!;
       }
     } catch (e) {
-      debugPrint('Auth unavailable: $e');
+      // debugPrint('Auth unavailable: $e');
     }
   }
 

@@ -58,7 +58,7 @@ class _ScorePredictionScreenState extends State<ScorePredictionScreen> {
         }
       }
     } catch (e) {
-      debugPrint('API maç verisi alınamadı: $e');
+      // debugPrint('API maç verisi alınamadı: $e');
       if (mounted) setState(() { _error = 'Maçlar yüklenirken hata oluştu.'; _isLoading = false; });
     }
   }

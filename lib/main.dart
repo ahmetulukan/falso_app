@@ -28,7 +28,7 @@ void main() async {
   try {
     await dotenv.load(fileName: '.env');
   } catch (e) {
-    debugPrint('dotenv load failed: $e');
+    // debugPrint('dotenv load failed: $e');
   }
   
   // Initialize cache service in local-only mode first (always works)
@@ -40,9 +40,9 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('Firebase initialized successfully');
+    // debugPrint('Firebase initialized successfully');
   } catch (e) {
-    debugPrint('Firebase unavailable, running in offline mode: $e');
+    // debugPrint('Firebase unavailable, running in offline mode: $e');
   }
   
   // Initialize game state (auth, streak, badges)
