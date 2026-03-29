@@ -2,60 +2,65 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
-  // Primary gradient colors (mor-pembe)
-  static const Color primaryPurple = Color(0xFF6C3FC5);
-  static const Color primaryPink = Color(0xFFE91E8C);
-  static const Color primaryOrange = Color(0xFFFF9800);
+  // Primary brand colors
+  static const Color primaryBlue = Color(0xFF1A73E8);
+  static const Color primaryGreen = Color(0xFF34A853);
+  static const Color primaryOrange = Color(0xFFFF6D00);
 
-  // Category card colors
-  static const Color categoryBlue = Color(0xFF2196F3);
-  static const Color categoryGreen = Color(0xFF4CAF50);
-  static const Color categoryRed = Color(0xFFE53935);
-  static const Color categoryYellow = Color(0xFFFFC107);
-  static const Color categoryTeal = Color(0xFF00BCD4);
-
-  // Background
-  static const Color bgDark = Color(0xFF1A1A2E);
-  static const Color bgCard = Color(0xFF16213E);
-  static const Color bgSurface = Color(0xFF0F3460);
+  // Background (Light / Ofsayt Style)
+  static const Color bgDark = Color(0xFFF8F9FA);      // Main background — very light gray
+  static const Color bgCard = Color(0xFFFFFFFF);       // Card background — white
+  static const Color bgSurface = Color(0xFFF1F3F5);   // Surface — subtle gray
 
   // Text
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFB0B0C3);
-  static const Color textAccent = Color(0xFFFFD700);
+  static const Color textPrimary = Color(0xFF1A1A2E);  // Near-black
+  static const Color textSecondary = Color(0xFF6B7280); // Gray-500
+  static const Color textAccent = Color(0xFFFF6D00);    // Orange accent
+
+  // Category card colors
+  static const Color categoryBlue = Color(0xFF1A73E8);
+  static const Color categoryGreen = Color(0xFF34A853);
+  static const Color categoryRed = Color(0xFFEA4335);
+  static const Color categoryYellow = Color(0xFFF9AB00);
+  static const Color categoryTeal = Color(0xFF0097A7);
 
   // Feedback
-  static const Color correct = Color(0xFF4CAF50);
-  static const Color wrong = Color(0xFFE53935);
-  static const Color warning = Color(0xFFFFC107);
+  static const Color correct = Color(0xFF34A853);
+  static const Color wrong = Color(0xFFEA4335);
+  static const Color warning = Color(0xFFF9AB00);
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [primaryPurple, primaryPink],
+    colors: [Color(0xFF1A73E8), Color(0xFF4285F4)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient orangeGradient = LinearGradient(
-    colors: [Color(0xFFFF6B35), Color(0xFFFF9800)],
+    colors: [Color(0xFFFF8A50), Color(0xFFFF6D00)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient blueGradient = LinearGradient(
-    colors: [Color(0xFF2196F3), Color(0xFF00BCD4)],
+    colors: [Color(0xFF4285F4), Color(0xFF1A73E8)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient greenGradient = LinearGradient(
-    colors: [Color(0xFF4CAF50), Color(0xFF81C784)],
+    colors: [Color(0xFF34A853), Color(0xFF1E8E3E)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
+  // Compatibility aliases
+  static const Color primaryPurple = primaryBlue;
+  static const LinearGradient purpleGradient = primaryGradient;
+
+  // Background gradient — almost flat white
   static const LinearGradient bgGradient = LinearGradient(
-    colors: [bgDark, bgCard, bgSurface],
+    colors: [bgDark, Color(0xFFEEF0F2)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
@@ -64,17 +69,17 @@ class AppColors {
 class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.bgDark,
-      primaryColor: AppColors.primaryPurple,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primaryPurple,
+      primaryColor: AppColors.primaryBlue,
+      colorScheme: const ColorScheme.light(
+        primary: AppColors.primaryBlue,
         secondary: AppColors.primaryOrange,
         surface: AppColors.bgCard,
         error: AppColors.wrong,
       ),
       textTheme: GoogleFonts.interTextTheme(
-        ThemeData.dark().textTheme,
+        ThemeData.light().textTheme,
       ).copyWith(
         headlineLarge: GoogleFonts.poppins(
           fontSize: 28,
@@ -101,7 +106,7 @@ class AppTheme {
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.bgCard,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: GoogleFonts.poppins(
@@ -109,14 +114,15 @@ class AppTheme {
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
         ),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryPurple,
+          backgroundColor: AppColors.primaryBlue,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: GoogleFonts.inter(
             fontSize: 16,
@@ -126,14 +132,15 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: AppColors.bgCard,
-        elevation: 8,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.grey.shade200),
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.bgCard,
-        selectedItemColor: AppColors.primaryPurple,
+        selectedItemColor: AppColors.primaryBlue,
         unselectedItemColor: AppColors.textSecondary,
         type: BottomNavigationBarType.fixed,
       ),
@@ -144,26 +151,27 @@ class AppTheme {
 class AppDecorations {
   static BoxDecoration get gradientBox => const BoxDecoration(
         gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.all(Radius.circular(20)),
+        borderRadius: BorderRadius.all(Radius.circular(16)),
       );
 
   static BoxDecoration cardBox({Color? color}) => BoxDecoration(
         color: color ?? AppColors.bgCard,
-        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       );
 
   static BoxDecoration glassBox() => BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: const BorderRadius.all(Radius.circular(20)),
+        color: AppColors.bgSurface,
+        borderRadius: const BorderRadius.all(Radius.circular(12)),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+          color: const Color(0xFFE5E7EB),
           width: 1,
         ),
       );

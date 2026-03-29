@@ -35,20 +35,12 @@ class _TriviaScreenState extends State<TriviaScreen> {
     _timer?.cancel();
     _timeLeft = 10;
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (_timeLeft > 0) {
-        setState(() => _timeLeft--);
-      } else {
-        _timer?.cancel();
-        _handleTimeout();
-      }
+      if (_timeLeft > 0) { setState(() => _timeLeft--); } else { _timer?.cancel(); _handleTimeout(); }
     });
   }
 
   void _handleTimeout() {
-    setState(() {
-      _answered = true;
-      _selectedAnswer = -1;
-    });
+    setState(() { _answered = true; _selectedAnswer = -1; });
     Future.delayed(const Duration(seconds: 2), _nextQuestion);
   }
 
@@ -60,25 +52,16 @@ class _TriviaScreenState extends State<TriviaScreen> {
     setState(() {
       _selectedAnswer = index;
       _answered = true;
-      if (isCorrect) {
-        _score += (_timeLeft * 10) + 50;
-        _correctCount++;
-      }
+      if (isCorrect) { _score += (_timeLeft * 10) + 50; _correctCount++; }
     });
     Future.delayed(const Duration(seconds: 2), _nextQuestion);
   }
 
   void _nextQuestion() {
     if (_currentIndex < _questions.length - 1) {
-      setState(() {
-        _currentIndex++;
-        _selectedAnswer = -1;
-        _answered = false;
-      });
+      setState(() { _currentIndex++; _selectedAnswer = -1; _answered = false; });
       _startTimer();
-    } else {
-      _showResults();
-    }
+    } else { _showResults(); }
   }
 
   void _showResults() {
@@ -88,44 +71,26 @@ class _TriviaScreenState extends State<TriviaScreen> {
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bgCard,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Column(
-          children: [
-            Icon(
-              _correctCount >= 7 ? Icons.emoji_events : Icons.sports_score,
-              color: AppColors.textAccent,
-              size: 64,
-            ),
-            const SizedBox(height: 12),
-            const Text('Oyun Bitti!', style: TextStyle(color: Colors.white)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Toplam Puan: $_score', style: const TextStyle(color: AppColors.textAccent, fontSize: 28, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Text('$_correctCount / ${_questions.length} doğru cevap', style: const TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-          ],
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Column(children: [
+          Icon(_correctCount >= 7 ? Icons.emoji_events : Icons.sports_score, color: AppColors.primaryOrange, size: 56),
+          const SizedBox(height: 12),
+          const Text('Oyun Bitti!', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        ]),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('Toplam Puan: $_score', style: const TextStyle(color: AppColors.primaryOrange, fontSize: 26, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Text('$_correctCount / ${_questions.length} doğru cevap', style: const TextStyle(color: AppColors.textSecondary, fontSize: 15)),
+        ]),
         actions: [
-          GradientButton(
-            text: 'Ana Sayfaya Dön',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-          ),
+          GradientButton(text: 'Ana Sayfaya Dön', onTap: () { Navigator.pop(context); Navigator.pop(context); }),
         ],
       ),
     );
   }
 
   @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
+  void dispose() { _timer?.cancel(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -133,115 +98,72 @@ class _TriviaScreenState extends State<TriviaScreen> {
     final labels = ['A', 'B', 'C', 'D'];
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.bgGradient),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Top bar
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    Text(
-                      'Soru ${_currentIndex + 1}/${_questions.length}',
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    CountdownTimer(seconds: _timeLeft, totalSeconds: 10),
-                  ],
+      backgroundColor: AppColors.bgDark,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                IconButton(icon: const Icon(Icons.close, color: AppColors.textPrimary), onPressed: () => Navigator.pop(context)),
+                Text('Soru ${_currentIndex + 1}/${_questions.length}', style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+                CountdownTimer(seconds: _timeLeft, totalSeconds: 10),
+              ]),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: (_currentIndex + 1) / _questions.length,
+                  backgroundColor: const Color(0xFFE5E7EB),
+                  valueColor: const AlwaysStoppedAnimation(AppColors.primaryBlue),
+                  minHeight: 5,
                 ),
-                const SizedBox(height: 8),
-
-                // Progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: (_currentIndex + 1) / _questions.length,
-                    backgroundColor: Colors.white.withOpacity(0.1),
-                    valueColor: const AlwaysStoppedAnimation(AppColors.primaryPurple),
-                    minHeight: 6,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: AppDecorations.glassBox(),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.star, color: AppColors.primaryOrange, size: 18),
+                  const SizedBox(width: 4),
+                  Text('$_score', style: const TextStyle(color: AppColors.primaryOrange, fontWeight: FontWeight.bold, fontSize: 16)),
+                ]),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(color: AppColors.primaryBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                child: Text(question.category, style: const TextStyle(color: AppColors.primaryBlue, fontSize: 12, fontWeight: FontWeight.w600)),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(22),
+                    decoration: AppDecorations.cardBox(),
+                    child: Center(child: Text(question.text, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w600, height: 1.4))),
                   ),
                 ),
-                const SizedBox(height: 8),
-
-                // Score
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: AppDecorations.glassBox(),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star, color: AppColors.textAccent, size: 20),
-                      const SizedBox(width: 6),
-                      Text('$_score', style: const TextStyle(color: AppColors.textAccent, fontWeight: FontWeight.bold, fontSize: 18)),
-                    ],
-                  ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                flex: 3,
+                child: ListView.separated(
+                  itemCount: question.options.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) {
+                    bool? isCorrect;
+                    if (_answered) {
+                      if (i == question.correctIndex) isCorrect = true;
+                      else if (i == _selectedAnswer) isCorrect = false;
+                    }
+                    return AnswerButton(text: question.options[i], label: labels[i], isSelected: _selectedAnswer == i, isCorrect: isCorrect, onTap: () => _selectAnswer(i));
+                  },
                 ),
-                const SizedBox(height: 20),
-
-                // Category badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryPurple.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(question.category, style: const TextStyle(color: AppColors.primaryPink, fontSize: 13, fontWeight: FontWeight.w600)),
-                ),
-                const SizedBox(height: 20),
-
-                // Question
-                Expanded(
-                  flex: 2,
-                  child: Center(
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: AppDecorations.cardBox(),
-                      child: Center(
-                        child: Text(
-                          question.text,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600, height: 1.4),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Answers
-                Expanded(
-                  flex: 3,
-                  child: ListView.separated(
-                    itemCount: question.options.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) {
-                      bool? isCorrect;
-                      if (_answered) {
-                        if (i == question.correctIndex) {
-                          isCorrect = true;
-                        } else if (i == _selectedAnswer) {
-                          isCorrect = false;
-                        }
-                      }
-                      return AnswerButton(
-                        text: question.options[i],
-                        label: labels[i],
-                        isSelected: _selectedAnswer == i,
-                        isCorrect: isCorrect,
-                        onTap: () => _selectAnswer(i),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

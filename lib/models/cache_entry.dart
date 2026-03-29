@@ -16,12 +16,19 @@ class CacheEntry {
   });
 
   factory CacheEntry.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic val) {
+      if (val is Timestamp) return val.toDate();
+      if (val is String) return DateTime.parse(val);
+      if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+      return DateTime.now();
+    }
+    
     return CacheEntry(
       id: json['id'],
       dataType: json['dataType'],
       data: json['data'],
-      cachedAt: (json['cachedAt'] as Timestamp).toDate(),
-      expiresAt: (json['expiresAt'] as Timestamp).toDate(),
+      cachedAt: parseDate(json['cachedAt']),
+      expiresAt: parseDate(json['expiresAt']),
     );
   }
 
@@ -30,8 +37,8 @@ class CacheEntry {
       'id': id,
       'dataType': dataType,
       'data': data,
-      'cachedAt': Timestamp.fromDate(cachedAt),
-      'expiresAt': Timestamp.fromDate(expiresAt),
+      'cachedAt': cachedAt.toIso8601String(),
+      'expiresAt': expiresAt.toIso8601String(),
     };
   }
 

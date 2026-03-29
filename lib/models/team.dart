@@ -6,6 +6,8 @@ class Team {
   final String country;
   final String league;
   final String stadium;
+  final double lat;
+  final double lon;
 
   Team({
     required this.id,
@@ -15,5 +17,7 @@ class Team {
     required this.country,
     required this.league,
     required this.stadium,
+    this.lat = 41.0,
+    this.lon = 29.0,
   });
 }

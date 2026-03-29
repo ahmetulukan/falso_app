@@ -24,44 +24,44 @@ class CategoryCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: gradient.colors.first.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+              color: gradient.colors.first.withOpacity(0.25),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.25),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: Colors.white, size: 32),
+                child: Icon(icon, color: Colors.white, size: 28),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 title,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: 11,
                 ),
               ),
             ],
@@ -92,15 +92,15 @@ class GradientButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: width ?? double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: gradient.colors.first.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+              color: gradient.colors.first.withOpacity(0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -109,7 +109,7 @@ class GradientButton extends StatelessWidget {
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -139,8 +139,13 @@ class AnswerButton extends StatelessWidget {
   Color get _bgColor {
     if (isCorrect == true) return AppColors.correct;
     if (isCorrect == false && isSelected) return AppColors.wrong;
-    if (isSelected) return AppColors.primaryPurple;
+    if (isSelected) return AppColors.primaryBlue;
     return backgroundColor ?? AppColors.bgSurface;
+  }
+
+  Color get _textColor {
+    if (isCorrect != null || isSelected) return Colors.white;
+    return AppColors.textPrimary;
   }
 
   @override
@@ -149,52 +154,54 @@ class AnswerButton extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: _bgColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? Colors.white.withOpacity(0.5)
-                : Colors.white.withOpacity(0.1),
-            width: 2,
+                ? Colors.transparent
+                : const Color(0xFFE5E7EB),
+            width: 1.5,
           ),
         ),
         child: Row(
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
+                color: isSelected || isCorrect != null
+                    ? Colors.white.withOpacity(0.2)
+                    : AppColors.primaryBlue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: _textColor,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 text,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
+                style: TextStyle(
+                  color: _textColor,
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
             if (isCorrect == true)
-              const Icon(Icons.check_circle, color: Colors.white, size: 24),
+              const Icon(Icons.check_circle, color: Colors.white, size: 22),
             if (isCorrect == false && isSelected)
-              const Icon(Icons.cancel, color: Colors.white, size: 24),
+              const Icon(Icons.cancel, color: Colors.white, size: 22),
           ],
         ),
       ),
@@ -222,18 +229,18 @@ class CountdownTimer extends StatelessWidget {
             : AppColors.wrong;
 
     return SizedBox(
-      width: 70,
-      height: 70,
+      width: 56,
+      height: 56,
       child: Stack(
         alignment: Alignment.center,
         children: [
           SizedBox(
-            width: 70,
-            height: 70,
+            width: 56,
+            height: 56,
             child: CircularProgressIndicator(
               value: progress,
-              strokeWidth: 5,
-              backgroundColor: Colors.white.withOpacity(0.1),
+              strokeWidth: 4,
+              backgroundColor: const Color(0xFFE5E7EB),
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
@@ -241,7 +248,7 @@ class CountdownTimer extends StatelessWidget {
             '$seconds',
             style: TextStyle(
               color: color,
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -262,32 +269,32 @@ class StatCard extends StatelessWidget {
     required this.icon,
     required this.value,
     required this.label,
-    this.color = AppColors.primaryPurple,
+    this.color = AppColors.primaryBlue,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: AppDecorations.glassBox(),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 6),
           Text(
             value,
             style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
+              color: AppColors.textPrimary,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 12,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
             ),
             textAlign: TextAlign.center,
           ),

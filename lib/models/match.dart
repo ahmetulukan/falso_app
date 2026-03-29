@@ -6,6 +6,11 @@ class Match {
   final int? homeScore;
   final int? awayScore;
   final String status;
+  final int leagueId;
+  final String leagueName;
+  final String leagueLogo;
+  final int homeTeamId;
+  final int awayTeamId;
 
   Match({
     required this.id,
@@ -15,17 +20,27 @@ class Match {
     this.homeScore,
     this.awayScore,
     required this.status,
+    this.leagueId = 0,
+    this.leagueName = '',
+    this.leagueLogo = '',
+    this.homeTeamId = 0,
+    this.awayTeamId = 0,
   });
 
   factory Match.fromJson(Map<String, dynamic> json) {
     return Match(
-      id: json['id'],
-      homeTeam: json['homeTeam'],
-      awayTeam: json['awayTeam'],
-      date: DateTime.parse(json['date']),
-      homeScore: json['homeScore'],
-      awayScore: json['awayScore'],
-      status: json['status'],
+      id: json['fixture']['id'].toString(),
+      homeTeam: json['teams']['home']['name'],
+      awayTeam: json['teams']['away']['name'],
+      date: DateTime.parse(json['fixture']['date']),
+      homeScore: json['goals']['home'],
+      awayScore: json['goals']['away'],
+      status: json['fixture']['status']['short'],
+      leagueId: json['league']?['id'] ?? 0,
+      leagueName: json['league']?['name'] ?? '',
+      leagueLogo: json['league']?['logo'] ?? '',
+      homeTeamId: json['teams']?['home']?['id'] ?? 0,
+      awayTeamId: json['teams']?['away']?['id'] ?? 0,
     );
   }
 
@@ -38,6 +53,11 @@ class Match {
       'homeScore': homeScore,
       'awayScore': awayScore,
       'status': status,
+      'leagueId': leagueId,
+      'leagueName': leagueName,
+      'leagueLogo': leagueLogo,
+      'homeTeamId': homeTeamId,
+      'awayTeamId': awayTeamId,
     };
   }
 }
