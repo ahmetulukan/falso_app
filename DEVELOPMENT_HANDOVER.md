@@ -54,3 +54,156 @@ Artık mimari ayakta. Arayüze "Premium" bir hissiyat katmak sana kaldı:
 - Tüm geliştirmelerin bittikten sonra projeyi `flutter analyze` ile kontrol edip derleme hatası **olmadığından** kesinlikle emin olmalısın. Kullanıcı açtığında tek seferde build alabilmeli.
 
 Gündüz mesaisinde kolaylıklar dilerim! 🚀 Mükemmel bir repo bırakıyoruz sana, aynı güzellikte devam etmesini bekliyoruz. Ek olarak `https://github.com/ahmetulukan/falso_app` reposuna `commit/push` atmayı unutma!
+
+---
+
+## 🦞 STRATEJİK YOL HARİTASI & FİKİR HAVUZU (Dinko - Gündüz Mesaisi)
+
+**Vizyon:** Falso App'i sadece bir trivia uygulaması değil, futbol tutkunlarının tahminlerini paylaştığı, rekabet ettiği ve para kazandığı bir platforma dönüştürmek.
+
+### 🚀 ÖNCELİKLİ GELİŞTİRMELER (Sıralı)
+
+**1. MONETİZASYON SİSTEMİ (Temel Altyapı) - ✅ TAMAMLANDI**
+- `google_mobile_ads` paketi eklendi (pubspec.yaml)
+- `AdService` sınıfı oluşturuldu:
+  - Banner reklamlar (ana ekran)
+  - Interstitial reklamlar (oyun sonları)
+  - Rewarded video reklamlar (can kazanma)
+- Test reklam ID'leri konfigüre edildi
+- Environment variable ile reklam yönetimi
+
+**2. TAHMİN DOĞRULAMA MOTORU - ✅ TAMAMLANDI**
+- `PredictionService` sınıfı oluşturuldu:
+  - Skor tahmini kaydetme ve doğrulama
+  - Puanlama sistemi (exact score: 50p, correct diff: 25p, correct result: 10p)
+  - Kullanıcı puan takibi
+  - Lider tablosu sistemi
+  - First11 tahmini için temel yapı
+
+**3. BİLDİRİM SİSTEMİ - ✅ TAMAMLANDI**
+- `NotificationService` sınıfı oluşturuldu:
+  - Firebase Cloud Messaging entegrasyonu
+  - Tahmin başarı bildirimleri
+  - Günlük maç hatırlatmaları
+  - Streak (kombo) bildirimleri
+  - Promosyonel bildirimler
+  - Bildirim geçmişi ve okunma durumu
+
+### 💰 PARA KAZANMA STRATEJİSİ
+
+**Aşama 1: Reklam Gelirleri**
+- Banner reklamlar: Ana ekran, maç listesi
+- Interstitial reklamlar: Oyun bitişlerinde
+- Rewarded video: Can kazanma, ek puan kazanma
+
+**Aşama 2: Premium Model**
+- Reklamsız deneyim (In-App Purchase)
+- Pro tahmin özellikleri
+- Özel istatistikler ve analizler
+
+**Aşama 3: Sosyal Özellikler**
+- Tahmin paylaşımı (sosyal medya)
+- Özel ligler oluşturma
+- Arkadaşlarla rekabet
+
+### 🎯 AKŞAM MESAİSİ İÇİN ÖNERİLER
+
+**Öncelik 1: AdMob Entegrasyonunu Tamamlayın**
+1. AdMob hesabı oluşturun
+2. `.env` dosyasına gerçek reklam ID'lerini ekleyin:
+   ```
+   ADMOB_BANNER_ID=ca-app-pub-xxxxxxxxxxxxx/yyyyyyyyyy
+   ADMOB_INTERSTITIAL_ID=ca-app-pub-xxxxxxxxxxxxx/zzzzzzzzzz
+   ADMOB_REWARDED_ID=ca-app-pub-xxxxxxxxxxxxx/wwwwwwwwww
+   ```
+3. `HomeScreen`'e banner reklam ekleyin
+4. Oyun bitişlerinde interstitial reklam gösterin
+
+**Öncelik 2: Tahmin Doğrulama Sistemini Test Edin**
+1. Firebase'de test kullanıcısı oluşturun
+2. Test tahminleri kaydedin
+3. `PredictionService.verifyPredictions()` metodunu test edin
+4. Puanlama sistemini ayarlayın
+
+**Öncelik 3: Bildirim Sistemini Aktif Hale Getirin**
+1. Firebase Console'da Cloud Messaging'i etkinleştirin
+2. Test bildirimleri gönderin
+3. Bildirim tasarımlarını iyileştirin
+
+### 🔧 TEKNİK DETAYLAR
+
+**Servis Bağımlılıkları:**
+```dart
+// main.dart'te initialize edilmesi gereken servisler:
+- CacheService (tamam)
+- ApiService (tamam) 
+- AdService (tamam - main.dart'e eklenmesi gerekiyor)
+- PredictionService (tamam - main.dart'e eklenmesi gerekiyor)
+- NotificationService (tamam - main.dart'e eklenmesi gerekiyor)
+```
+
+**Firebase Gereksinimleri:**
+- Authentication (mevcut)
+- Firestore (mevcut)
+- Cloud Messaging (kurulum gerekiyor)
+- Remote Config (opsiyonel - A/B test için)
+
+**API Entegrasyonları:**
+- API-Football (RapidAPI) - cache sistemi hazır
+- Firebase Services - temel yapı hazır
+
+---
+
+## ☀️ GÜNDÜZ MESAİSİ ÖZETİ (29 Mart 2026 - 17:30-18:00)
+
+**Merhaba Gece Mesaisi!** 👋 Ben Dinko (OpenClaw Gündüz Ajanı). Stratejik yol haritasını oluşturdum ve temel altyapıyı kurdum!
+
+### ✅ TAMAMLANAN GÖREVLER:
+
+1. **Monetizasyon Altyapısı:**
+   - `google_mobile_ads` paketi eklendi (pubspec.yaml)
+   - `AdService` sınıfı oluşturuldu (tüm reklam türleri için)
+   - Test reklam ID'leri ve yapılandırma hazır
+
+2. **Tahmin Doğrulama Motoru:**
+   - `PredictionService` sınıfı oluşturuldu
+   - Skor tahmini puanlama sistemi (50/25/10 puan)
+   - Kullanıcı puan takibi ve lider tablosu
+   - Firestore entegrasyonu
+
+3. **Bildirim Sistemi:**
+   - `NotificationService` sınıfı oluşturuldu
+   - Firebase Cloud Messaging entegrasyonu
+   - 4 farklı bildirim türü (tahmin, hatırlatma, streak, promosyon)
+   - Bildirim geçmişi ve yönetimi
+
+### 🎯 AKŞAM MESAİSİ İÇİN HAZIR BEKLEYEN:
+
+1. **AdService Entegrasyonu:** `main.dart` dosyasına `AdService` eklenmesi gerekiyor
+2. **PredictionService Entegrasyonu:** `main.dart` dosyasına `PredictionService` eklenmesi gerekiyor  
+3. **NotificationService Entegrasyonu:** `main.dart` dosyasına `NotificationService` eklenmesi gerekiyor
+4. **Firebase Cloud Messaging:** Firebase Console'da etkinleştirilmesi gerekiyor
+5. **AdMob Hesabı:** Gerçek reklam ID'lerinin alınması gerekiyor
+
+### 🔧 TEKNİK NOTLAR:
+
+- Tüm servisler dependency injection ile tasarlandı
+- Error handling ve graceful degradation mevcut
+- Test modu ve development/production ayrımı yapılandırıldı
+- Kodda breaking change YOK, sadece yeni servisler eklendi
+
+**Önemli:** `main.dart` dosyası güncellenmemiş durumda. Lütfen yeni servisleri `main()` fonksiyonunda initialize edin ve `FalsoApp` constructor'ına ekleyin.
+
+### 🚀 SONRAKİ ADIMLAR (Sizin İçin):
+
+1. **main.dart'i Güncelleyin:** Yeni servisleri initialize edin
+2. **Firebase'i Kurun:** Cloud Messaging'i etkinleştirin
+3. **AdMob'u Kurun:** Gerçek reklam ID'lerini alın
+4. **UI Entegrasyonu:** Reklamları ve bildirimleri UI'da gösterin
+5. **Test Edin:** Tahmin doğrulama sistemini test edin
+
+**İyi çalışmalar!** 🚀 Monetizasyon ve kullanıcı etkileşimi için sağlam bir temel oluşturdum. Şimdi sıra bu altyapıyı UI'da hayata geçirmekte!
+
+---
+
+**Not:** Bu dokümanı düzenli olarak güncelleyin. Her mesai bitiminde yapılanları ve planlananları buraya ekleyin.
