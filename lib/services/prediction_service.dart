@@ -6,7 +6,30 @@ class PredictionService {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
   
-  PredictionService(this._firestore, this._auth);
+  PredictionService([FirebaseFirestore? firestore, FirebaseAuth? auth])
+      : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
+  
+  /// Convenience method called from score_prediction_screen.dart
+  Future<void> recordPrediction({
+    required String userId,
+    required String matchId,
+    required int predictedHomeScore,
+    required int predictedAwayScore,
+    required String type,
+  }) async {
+    try {
+      await saveScorePrediction(
+        matchId: matchId,
+        homeScore: predictedHomeScore,
+        awayScore: predictedAwayScore,
+        userId: userId,
+      );
+    } catch (e) {
+      // Silently fail if Firebase is not configured
+      // Predictions are still saved locally via GameStateService
+    }
+  }
   
   // Save user's score prediction
   Future<void> saveScorePrediction({
@@ -53,8 +76,8 @@ class PredictionService {
   // Verify predictions against actual match results
   Future<void> verifyPredictions(Match actualMatch) async {
     final matchId = actualMatch.id;
-    final actualHomeScore = actualMatch.homeScore;
-    final actualAwayScore = actualMatch.awayScore;
+    final actualHomeScore = actualMatch.homeScore ?? 0;
+    final actualAwayScore = actualMatch.awayScore ?? 0;
     
     // Get all pending predictions for this match
     final predictionsSnapshot = await _firestore
@@ -176,7 +199,7 @@ class PredictionService {
   }
   
   // Get user's prediction history
-  Future<QuerySnapshot> getUserPredictions(String userId) async {
+  Future<QuerySnapshot<Map<String, dynamic>>> getUserPredictions(String userId) async {
     return await _firestore
         .collection('predictions')
         .where('userId', isEqualTo: userId)
@@ -197,8 +220,9 @@ class PredictionService {
     
     for (final doc in predictions.docs) {
       total++;
-      final status = doc.data()['status'] as String? ?? 'pending';
-      final points = doc.data()['pointsAwarded'] as int? ?? 0;
+      final data = doc.data();
+      final status = data['status'] as String? ?? 'pending';
+      final points = data['pointsAwarded'] as int? ?? 0;
       
       switch (status) {
         case 'correct':
@@ -227,7 +251,7 @@ class PredictionService {
   }
   
   // Get leaderboard
-  Future<QuerySnapshot> getLeaderboard({int limit = 100}) async {
+  Future<QuerySnapshot<Map<String, dynamic>>> getLeaderboard({int limit = 100}) async {
     return await _firestore
         .collection('users')
         .orderBy('totalPoints', descending: true)
@@ -236,7 +260,7 @@ class PredictionService {
   }
   
   // Get matches that need verification (finished matches with pending predictions)
-  Future<QuerySnapshot> getMatchesNeedingVerification() async {
+  Future<QuerySnapshot<Map<String, dynamic>>> getMatchesNeedingVerification() async {
     // This would query matches that have ended but predictions are still pending
     // For now, return empty - this needs integration with match scheduling
     return await _firestore

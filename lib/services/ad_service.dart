@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -169,6 +170,18 @@ class AdService {
     _interstitialAd?.dispose();
     _rewardedAd?.dispose();
     print('AdService disposed');
+  }
+  
+  // Get banner ad as a Widget (convenience method)
+  Widget getBannerAdWidget() {
+    if (_bannerAd != null) {
+      return SizedBox(
+        width: _bannerAd!.size.width.toDouble(),
+        height: _bannerAd!.size.height.toDouble(),
+        child: AdWidget(ad: _bannerAd!),
+      );
+    }
+    return const SizedBox.shrink();
   }
   
   // Check if ads are enabled (for premium users)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
@@ -20,6 +21,8 @@ import 'screens/auth_screen.dart';
 import 'services/cache_service.dart';
 import 'services/api_service.dart';
 import 'services/game_state_service.dart';
+import 'services/ad_service.dart';
+import 'services/custom_ad_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +47,17 @@ void main() async {
   } catch (e) {
     // debugPrint('Firebase unavailable, running in offline mode: $e');
   }
+  
+  // Initialize Google Mobile Ads SDK (non-blocking)
+  try {
+    await MobileAds.instance.initialize();
+  } catch (e) {
+    // debugPrint('AdMob init failed: $e');
+  }
+  
+  // Initialize custom ad service (brand banners)
+  final customAdService = CustomAdService();
+  try { await customAdService.initialize(); } catch (_) {}
   
   // Initialize game state (auth, streak, badges)
   try { await GameStateService.getInstance(); } catch (_) {}

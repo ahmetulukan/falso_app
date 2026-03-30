@@ -103,7 +103,7 @@ class _ScorePredictionScreenState extends State<ScorePredictionScreen> {
         
         // Register prediction in PredictionService for later verification
         await _predictionService.recordPrediction(
-          userId: gs.userId ?? 'anonymous',
+          userId: gs.uid ?? 'anonymous',
           matchId: matchId,
           predictedHomeScore: homeScore,
           predictedAwayScore: awayScore,

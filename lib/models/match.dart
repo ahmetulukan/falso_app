@@ -11,6 +11,8 @@ class Match {
   final String leagueLogo;
   final int homeTeamId;
   final int awayTeamId;
+  final String? homeLogo;
+  final String? awayLogo;
 
   Match({
     required this.id,
@@ -25,6 +27,8 @@ class Match {
     this.leagueLogo = '',
     this.homeTeamId = 0,
     this.awayTeamId = 0,
+    this.homeLogo,
+    this.awayLogo,
   });
 
   factory Match.fromJson(Map<String, dynamic> json) {
@@ -41,6 +45,8 @@ class Match {
       leagueLogo: json['league']?['logo'] ?? '',
       homeTeamId: json['teams']?['home']?['id'] ?? 0,
       awayTeamId: json['teams']?['away']?['id'] ?? 0,
+      homeLogo: json['teams']?['home']?['logo'],
+      awayLogo: json['teams']?['away']?['logo'],
     );
   }
 
@@ -58,6 +64,8 @@ class Match {
       'leagueLogo': leagueLogo,
       'homeTeamId': homeTeamId,
       'awayTeamId': awayTeamId,
+      'homeLogo': homeLogo,
+      'awayLogo': awayLogo,
     };
   }
 }

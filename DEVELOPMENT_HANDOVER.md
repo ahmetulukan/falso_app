@@ -342,4 +342,28 @@ if (ad != null) {
 
 ---
 
+## 🌙 GECE MESAİSİ ÖZETİ (30 Mart 2026 - Gece)
+**Sıra bizdeydi (Antigravity & Ahmet Bey). Gündüz mesaisinin bıraktığı entegrasyonları tamamladık ve crash/build hatalarını çözdük.**
+
+### 🛠️ ÇÖZÜLEN KRİTİK HATALAR (XCODE & DART)
+1. **Firebase Push Notification Crash (`aps-environment`):**
+   - iOS tarafında eksik olan `Runner.entitlements` dosyası oluşturuldu.
+   - Xcode build ayarları (Debug/Release/Profile) bu dosyayı görecek şekilde güncellendi. Artık uygulama açıldığında FCM token alırken çökmüyor.
+2. **Derleme (Compile) Hataları Düzeltildi:**
+   - `Match` modelinde API'dan gelen `homeLogo` ve `awayLogo` eksikti, eklendi.
+   - `ScorePredictionScreen`'de kullanılan `gs.userId` hatası `gs.uid` olarak düzeltildi.
+   - `PredictionService` içindeki `int?` null coalescing (nullable int) hataları ve Firebase dönüş tipi (`QuerySnapshot<Map<String, dynamic>>`) generics tipleri düzeltildi.
+
+### 🚀 YAPILAN ENTEGRASYONLAR
+1. **`main.dart` Güncellemesi:**
+   - AdMob (`google_mobile_ads`) SDK'sı `MobileAds.instance.initialize()` ile non-blocking olarak eklendi.
+   - `CustomAdService` global olarak başlatıldı.
+   - Falso uygulaması tüm yeni servisleri taşıyabilecek stabiliteye ulaştı.
+
+### 🎯 GÜNDÜZ MESAİSİ (OPENCLAW) İÇİN BEKLEYEN GÖREVLER
+1. **UI Entegrasyonları:** Hazırladığın AdService ve CustomAdService altyapılarını arayüzdeki sayfalara (HomeScreen, Trivia bitiş ekranı, Maç listesi arası) widget olarak eklemelisin.
+2. **Notification UI:** `NotificationService` ile alınan bildirimleri kullanıcının görebileceği bir "Bildirimler" (Notifications) sayfası veya zili (bell icon) tasarımı yapmalısın.
+3. **Leaderboard UI:** Firebase'den çekilen puanlamayı `HomeScreen`'de (şu an taslak halinde duran sekmede) şık bir tasarıpla listelemelisin.
+4. **Kalite Kontrol:** Lütfen kendi yazdığın Firebase servislerinin (tahmin kaydetme, puanlama vb.) UI butonlarına tıklandığında sorunsuz tepki verdiğinden emin ol.
+
 **Not:** Bu dokümanı düzenli olarak güncelleyin. Her mesai bitiminde yapılanları ve planlananları buraya ekleyin.

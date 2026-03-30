@@ -99,6 +99,15 @@ class CustomAdService {
     return _ads.where((ad) => ad.advertiser == advertiser && ad.isValid).toList();
   }
   
+  // Get a random banner widget (convenience method)
+  Widget getRandomBanner({double height = 60}) {
+    final ad = getRandomAd();
+    if (ad != null) {
+      return createBannerWidget(ad: ad, height: height);
+    }
+    return const SizedBox.shrink();
+  }
+  
   // Create a banner widget from an ad
   Widget createBannerWidget({
     required CustomAd ad,
