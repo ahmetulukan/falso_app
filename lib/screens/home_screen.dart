@@ -182,6 +182,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 gradient: AppColors.blueGradient,
                 onTap: () => Navigator.pushNamed(context, '/juggling'),
               ),
+              CategoryCard(
+                title: 'Ball Bounce Blitz',
+                subtitle: 'Paddle + düşman!',
+                icon: Icons.flash_on,
+                gradient: AppColors.orangeGradient,
+                onTap: () => Navigator.pushNamed(context, '/ball_bounce_blitz'),
+              ),
             ],
           ),
         ],
@@ -205,6 +212,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _gameListTile(Icons.flight_takeoff, 'Transfer Zinciri', '${QuestionService.getTransferChains().length} transfer zinciri', AppColors.primaryBlue, '/transfer_chain'),
           _gameListTile(Icons.group_add_rounded, 'Kadro Tahmini', 'Maç öncesi ilk 11\'ini kur', AppColors.primaryOrange, '/lineup_prediction'),
           _gameListTile(Icons.sports_soccer, 'Mini Futbol', 'Bilgisayara karşı 2D maç', AppColors.categoryGreen, '/mini_football'),
+          _gameListTile(Icons.sports_handball, 'Penaltı', 'Kaleye şut at!', AppColors.primaryOrange, '/penalty'),
+          _gameListTile(Icons.do_not_step, 'Top Sektirme', 'Kaç kez sektir?', AppColors.categoryBlue, '/juggling'),
+          _gameListTile(Icons.flash_on, 'Ball Bounce Blitz', 'Paddle + düşman!', AppColors.primaryOrange, '/ball_bounce_blitz'),
         ],
       ),
     );

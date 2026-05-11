@@ -17,6 +17,7 @@ import 'screens/lineup_prediction_screen.dart';
 import 'screens/mini_football_game_screen.dart';
 import 'screens/penalty_game_screen.dart';
 import 'screens/juggling_game_screen.dart';
+import 'screens/ball_bounce_blitz_screen.dart';
 import 'screens/auth_screen.dart';
 import 'services/cache_service.dart';
 import 'services/api_service.dart';
@@ -100,6 +101,7 @@ class FalsoApp extends StatelessWidget {
         '/mini_football': (context) => const MiniFootballGameScreen(),
         '/penalty': (context) => const PenaltyGameScreen(),
         '/juggling': (context) => const JugglingGameScreen(),
+        '/ball_bounce_blitz': (context) => const BallBounceBlitzScreen(),
       },
     );
   }
