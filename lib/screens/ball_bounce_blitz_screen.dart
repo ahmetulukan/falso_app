@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 
-/// Ball Bounce Blitz - Oyuncu paddle ile topu yukarı sektirir
-/// Düşman topları kaçınır, power-up'lar toplar
+/// Ball Bounce Blitz - Wave & Boss Edition
+/// Wave system, Boss balls, Fireball power-up, Twinkling stars, Floating score text
 class BallBounceBlitzScreen extends StatefulWidget {
   const BallBounceBlitzScreen({super.key});
 
@@ -23,8 +23,16 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
   int _bestScore = 0;
   int _level = 1;
   int _lives = 3;
+  int _wave = 1;
+  int _waveTimer = 0;
+  int _bossWave = 5;
+  bool _bossActive = false;
+  int _bossHp = 0;
+  bool _bossFlash = false;
   Timer? _timer;
-  int _frameCount = 0;
+
+  // --- Achievements ---
+  final Set<String> _achievements = {};
 
   // --- Paddle ---
   double _paddleX = 0.5;
@@ -32,12 +40,15 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
   static const double _paddleY = 0.88;
   double _paddleTargetX = 0.5;
 
-  // --- Player Balls (multi-ball support) ---
+  // --- Player Balls ---
   List<_PlayerBall> _playerBalls = [];
 
   // --- Enemy Balls ---
   List<_EnemyBall> _enemyBalls = [];
   int _nextEnemySpawn = 120;
+
+  // --- Boss Ball ---
+  _BossBall? _bossBall;
 
   // --- Power-ups ---
   List<_PowerUp> _powerUps = [];
@@ -60,8 +71,43 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
   // --- Trail ---
   List<_TrailPoint> _trail = [];
 
+  // --- Floating Score Texts ---
+  List<_FloatText> _floatTexts = [];
+
+  // --- Wave Announcement ---
+  bool _waveAnnounce = false;
+  int _waveAnnounceTimer = 0;
+
+  // --- Level Up Flash ---
+  bool _levelFlash = false;
+  int _levelFlashTimer = 0;
+
+  // --- Twinkling Stars ---
+  late List<_TwinkleStar> _twinkleStars;
+
   // --- Touch ---
   Offset? _lastTouch;
+
+  static const double _ballR = 0.04;
+  static const double _kickVy = -0.018;
+  static const double _maxVx = 0.018;
+
+  @override
+  void initState() {
+    super.initState();
+    _initStars();
+  }
+
+  void _initStars() {
+    final rng = Random(99);
+    _twinkleStars = List.generate(50, (i) => _TwinkleStar(
+      x: rng.nextDouble(),
+      y: rng.nextDouble() * 0.75,
+      size: 0.8 + rng.nextDouble() * 1.4,
+      phase: rng.nextDouble() * 2 * pi,
+      speed: 0.02 + rng.nextDouble() * 0.03,
+    ));
+  }
 
   void _start() {
     _paddleX = 0.5;
@@ -83,16 +129,29 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
     _powerUps = [];
     _particles = [];
     _trail = [];
+    _floatTexts = [];
     _frameCount = 0;
     _nextEnemySpawn = 120;
     _nextPowerUpSpawn = 300;
     _lastTouch = null;
     _shaking = false;
     _shakeX = 0; _shakeY = 0;
+    _wave = 1;
+    _waveTimer = 0;
+    _bossActive = false;
+    _bossBall = null;
+    _waveAnnounce = true;
+    _waveAnnounceTimer = 90;
+    _levelFlash = false;
+    _levelFlashTimer = 0;
+    _bossFlash = false;
+    _initStars();
     setState(() => _playing = true; _gameOver = false; _paused = false; });
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 16), (_) => _update());
   }
+
+  int _frameCount = 0;
 
   void _triggerShake({double intensity = 6}) {
     _shaking = true;
@@ -104,9 +163,34 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
     });
   }
 
+  void _spawnFloatText(String text, double x, double y, Color color, {double size = 14}) {
+    _floatTexts.add(_FloatText(
+      text: text, x: x, y: y,
+      vy: -0.006,
+      life: 45,
+      color: color, size: size,
+    ));
+  }
+
   void _update() {
     if (!_playing || _paused) return;
     _frameCount++;
+
+    // Wave timer
+    _waveTimer++;
+
+    // Wave announcement countdown
+    if (_waveAnnounce) {
+      _waveAnnounceTimer--;
+      if (_waveAnnounceTimer <= 0) _waveAnnounce = false;
+    }
+
+    // Level flash
+    if (_levelFlash) {
+      _levelFlashTimer--;
+      if (_levelFlashTimer <= 0) _levelFlash = false;
+    }
+
     setState(() {
       // Move paddle smoothly
       _paddleX += (_paddleTargetX - _paddleX) * 0.18;
@@ -117,13 +201,13 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
       // Update player balls
       for (int bi = _playerBalls.length - 1; bi >= 0; bi--) {
         final b = _playerBalls[bi];
-        b.vy += 0.00025 * timeScale; // gravity
+        b.vy += 0.00025 * timeScale;
         b.vx *= 0.998;
         b.x += b.vx * timeScale;
         b.y += b.vy * timeScale;
         b.rotation += b.vx * 6;
 
-        // Wall bounce (sides)
+        // Wall bounce
         if (b.x < _ballR) { b.x = _ballR; b.vx = b.vx.abs(); }
         if (b.x > 1 - _ballR) { b.x = 1 - _ballR; b.vx = -b.vx.abs(); }
 
@@ -132,8 +216,13 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
 
         // Trail
         if (_frameCount % 2 == 0) {
-          _trail.add(_TrailPoint(x: b.x, y: b.y, life: 18, r: _ballR * 0.7));
-          if (_trail.length > 40) _trail.removeAt(0);
+          final trailColor = _activePowerUp == 'fireball'
+              ? Colors.orange
+              : _activePowerUp == 'multi'
+                  ? Colors.cyan
+                  : AppColors.primaryBlue;
+          _trail.add(_TrailPoint(x: b.x, y: b.y, life: 18, r: _ballR * 0.7, color: trailColor));
+          if (_trail.length > 50) _trail.removeAt(0);
         }
 
         // Paddle collision
@@ -147,21 +236,33 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
           b.vx += (b.x - _paddleX) * 0.04;
           b.vx = b.vx.clamp(-_maxVx * 1.5, _maxVx * 1.5);
 
-          // Combo
           _combo = min(_combo + 1, _comboMax);
           _comboTimer = 60;
 
-          // Score with combo multiplier
           final multiplier = 1 + (_combo ~/ 3);
           _score += multiplier;
-          if (_score % 15 == 0) _level++;
+          if (_score > 0 && _score % 15 == 0) {
+            _level++;
+            _levelFlash = true;
+            _levelFlashTimer = 40;
+            _spawnFloatText('🎯 LEVEL UP!', 0.5, 0.3, Colors.yellow, size: 18);
+            if (_level % _bossWave == 0 && !_bossActive) {
+              _spawnBoss();
+            }
+          }
 
-          _spawnKickParticles(b.x, _paddleY - 0.02);
+          _spawnKickParticles(b.x, _paddleY - 0.02, color: _activePowerUp == 'fireball' ? Colors.orange : Colors.yellow);
           HapticFeedback.lightImpact();
           if (_combo > 2) _triggerShake(intensity: 3);
+
+          // Achievement: 10 combo
+          if (_combo == 10 && !_achievements.contains('combo_10')) {
+            _achievements.add('combo_10');
+            _spawnFloatText('🏆 COMBO x10!', 0.5, 0.5, Colors.amber, size: 16);
+          }
         }
 
-        // Ball fell — lose life
+        // Ball fell
         if (b.y > 1.1) {
           _playerBalls.removeAt(bi);
           if (_playerBalls.isEmpty) {
@@ -170,7 +271,6 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
               _endGame();
               return;
             } else {
-              // Respawn
               _playerBalls.add(_PlayerBall(
                 x: _paddleX, y: _paddleY - 0.1,
                 vx: 0, vy: -0.015, rotation: 0));
@@ -184,7 +284,7 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
 
       // --- Enemy Balls ---
       _nextEnemySpawn = (_nextEnemySpawn - timeScale.toInt()).clamp(1, 9999).toInt();
-      if (_nextEnemySpawn <= 0) {
+      if (_nextEnemySpawn <= 0 && !_bossActive) {
         final side = Random().nextBool();
         _enemyBalls.add(_EnemyBall(
           x: side ? Random().nextDouble() : Random().nextDouble(),
@@ -202,14 +302,11 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
         e.y += e.vy * timeScale;
         e.angle = (e.angle ?? 0) + e.vx * 4;
 
-        // Wall bounce
         if (e.x < e.r) { e.x = e.r; e.vx = e.vx.abs(); }
         if (e.x > 1 - e.r) { e.x = 1 - e.r; e.vx = -e.vx.abs(); }
 
-        // Remove if off screen
         if (e.y > 1.2) { _enemyBalls.removeAt(i); continue; }
 
-        // Collision with paddle (shield blocks)
         if (_activePowerUp != 'shield' &&
             e.y + e.r > _paddleY - 0.02 &&
             e.y < _paddleY + 0.02 &&
@@ -223,13 +320,20 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
           continue;
         }
 
-        // Collision with player balls
+        // Fireball destroys enemies on contact
+        bool fireballKill = _activePowerUp == 'fireball';
+
         for (int bi = _playerBalls.length - 1; bi >= 0; bi--) {
           final b = _playerBalls[bi];
           final dx = b.x - e.x, dy = b.y - e.y;
           if (sqrt(dx * dx + dy * dy) < _ballR + e.r) {
             _enemyBalls.removeAt(i);
-            _spawnExplosion(e.x, e.y, Colors.orange, 10);
+            final color = fireballKill ? Colors.orange : Colors.orange;
+            _spawnExplosion(e.x, e.y, color, fireballKill ? 16 : 10);
+            if (fireballKill) {
+              _score += 5;
+              _spawnFloatText('+5', e.x, e.y, Colors.orange);
+            }
             if (_activePowerUp != 'shield') {
               _lives--;
               _triggerShake(intensity: 10);
@@ -242,23 +346,78 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
         }
       }
 
+      // --- Boss Ball ---
+      if (_bossActive && _bossBall != null) {
+        final boss = _bossBall!;
+        boss.x += boss.vx * timeScale;
+        boss.y += boss.vy * timeScale;
+        boss.angle = (boss.angle ?? 0) + boss.vx * 2;
+        boss.bobPhase += 0.04;
+
+        if (boss.x < boss.r) { boss.x = boss.r; boss.vx = boss.vx.abs(); }
+        if (boss.x > 1 - boss.r) { boss.x = 1 - boss.r; boss.vx = -boss.vx.abs(); }
+        if (boss.y > 0.25) { boss.y = 0.25; boss.vy = -boss.vy.abs(); }
+        if (boss.y < 0.03) { boss.y = 0.03; boss.vy = boss.vy.abs(); }
+
+        // Boss collision with paddle
+        if (_activePowerUp != 'shield' &&
+            boss.y + boss.r > _paddleY - 0.02 &&
+            boss.y < _paddleY + 0.02 &&
+            boss.x > _paddleX - _paddleW / 2 &&
+            boss.x < _paddleX + _paddleW / 2) {
+          _lives--;
+          _triggerShake(intensity: 14);
+          _spawnExplosion(boss.x, _paddleY, Colors.red, 15);
+          if (_lives <= 0) { _endGame(); return; }
+        }
+
+        // Boss hit by player balls
+        for (int bi = _playerBalls.length - 1; bi >= 0; bi--) {
+          final b = _playerBalls[bi];
+          final dx = b.x - boss.x, dy = b.y - boss.y;
+          if (sqrt(dx * dx + dy * dy) < _ballR + boss.r) {
+            boss.hp--;
+            boss.flashTimer = 8;
+            _spawnExplosion(boss.x, boss.y, Colors.red, 12);
+            _score += 10;
+            _spawnFloatText('💥 -1 HP!', boss.x, boss.y - 0.05, Colors.red, size: 16);
+            _triggerShake(intensity: 6);
+            if (boss.hp <= 0) {
+              _killBoss();
+            } else {
+              // Bounce ball back
+              b.vy = -b.vy.abs();
+            }
+          }
+        }
+
+        // Boss vs enemy ball collision
+        for (int i = _enemyBalls.length - 1; i >= 0; i--) {
+          final e = _enemyBalls[i];
+          final dx = e.x - boss.x, dy = e.y - boss.y;
+          if (sqrt(dx * dx + dy * dy) < boss.r + e.r) {
+            _enemyBalls.removeAt(i);
+            _spawnExplosion(e.x, e.y, Colors.orange, 8);
+          }
+        }
+      }
+
       // --- Power-ups ---
       _nextPowerUpSpawn--;
       if (_nextPowerUpSpawn <= 0) {
-        final types = ['life', 'multi', 'shield', 'slowmo'];
+        final types = ['life', 'multi', 'shield', 'slowmo', 'fireball'];
         final type = types[Random().nextInt(types.length)];
         _powerUps.add(_PowerUp(
           x: 0.1 + Random().nextDouble() * 0.8,
           y: -0.04,
           type: type,
         ));
-        _nextPowerUpSpawn = 350 + Random().nextInt(200);
+        _nextPowerUpSpawn = 300 + Random().nextInt(200);
       }
       for (int i = _powerUps.length - 1; i >= 0; i--) {
         final p = _powerUps[i];
         p.y += 0.004;
         if (p.y > 1.1) { _powerUps.removeAt(i); continue; }
-        // Collect by any player ball
         bool collected = false;
         for (final b in _playerBalls) {
           final dx = b.x - p.x, dy = b.y - p.y;
@@ -273,8 +432,8 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
         if (p.type == 'life') {
           _lives = min(_lives + 1, 5);
           _spawnKickParticles(p.x, p.y, color: Colors.red);
+          _spawnFloatText('+1 ❤️', p.x, p.y, Colors.red);
         } else if (p.type == 'multi') {
-          // Spawn extra balls
           final ref = _playerBalls[0];
           for (int j = 0; j < 2; j++) {
             _playerBalls.add(_PlayerBall(
@@ -288,24 +447,30 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
           _activePowerUp = 'multi';
           _powerUpTimer = 240;
           _spawnKickParticles(p.x, p.y, color: Colors.cyan);
+          _spawnFloatText('⚡ MULTI-BALL!', p.x, p.y, Colors.cyan, size: 16);
         } else if (p.type == 'shield') {
           _activePowerUp = 'shield';
           _powerUpTimer = 300;
           _spawnKickParticles(p.x, p.y, color: Colors.purpleAccent);
+          _spawnFloatText('🛡️ SHIELD!', p.x, p.y, Colors.purpleAccent, size: 16);
         } else if (p.type == 'slowmo') {
           _activePowerUp = 'slowmo';
           _powerUpTimer = 300;
           _spawnKickParticles(p.x, p.y, color: Colors.yellow);
+          _spawnFloatText('⏱️ SLOW-MO!', p.x, p.y, Colors.yellow, size: 16);
+        } else if (p.type == 'fireball') {
+          _activePowerUp = 'fireball';
+          _powerUpTimer = 240;
+          _spawnKickParticles(p.x, p.y, color: Colors.deepOrange);
+          _spawnFloatText('🔥 FIREBALL!', p.x, p.y, Colors.deepOrange, size: 16);
         }
       }
 
-      // Power-up timer
       if (_activePowerUp != null) {
         _powerUpTimer--;
         if (_powerUpTimer <= 0) _activePowerUp = null;
       }
 
-      // Combo timer
       if (_comboTimer > 0) {
         _comboTimer--;
         if (_comboTimer <= 0) _combo = 0;
@@ -326,7 +491,57 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
         _trail[i].life--;
         if (_trail[i].life <= 0) _trail.removeAt(i);
       }
+
+      // Float texts
+      for (int i = _floatTexts.length - 1; i >= 0; i--) {
+        final ft = _floatTexts[i];
+        ft.y += ft.vy;
+        ft.life--;
+        if (ft.life <= 0) _floatTexts.removeAt(i);
+      }
     });
+  }
+
+  void _spawnBoss() {
+    _bossActive = true;
+    final bossHp = 3 + (_level ~/ _bossWave);
+    _bossBall = _BossBall(
+      x: 0.5, y: 0.1,
+      vx: (Random().nextDouble() - 0.5) * 0.003,
+      vy: 0.002,
+      r: 0.08,
+      hp: bossHp,
+      maxHp: bossHp,
+    );
+    _spawnFloatText('💀 BOSS APPROACHES!', 0.5, 0.5, Colors.red, size: 20);
+    _triggerShake(intensity: 12);
+  }
+
+  void _killBoss() {
+    if (_bossBall == null) return;
+    final boss = _bossBall!;
+    for (int i = 0; i < 40; i++) {
+      final a = Random().nextDouble() * 2 * pi;
+      final spd = 0.005 + Random().nextDouble() * 0.015;
+      _particles.add(_Particle(
+        x: boss.x, y: boss.y,
+        vx: cos(a) * spd,
+        vy: sin(a) * spd,
+        life: 40 + Random().nextInt(30),
+        color: [Colors.red, Colors.orange, Colors.yellow][Random().nextInt(3)],
+        r: 0.015 + Random().nextDouble() * 0.02,
+      ));
+    }
+    _score += 50;
+    _spawnFloatText('💀 BOSS DEFEATED! +50', 0.5, 0.4, Colors.amber, size: 18);
+    _bossBall = null;
+    _bossActive = false;
+    _triggerShake(intensity: 16);
+
+    // Achievement
+    if (!_achievements.contains('boss_killer')) {
+      _achievements.add('boss_killer');
+    }
   }
 
   void _endGame() {
@@ -392,10 +607,10 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
                   icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
                   onPressed: () => Navigator.pop(context),
                 ),
-                const Expanded(
+                Expanded(
                   child: Text('⚡ Ball Bounce Blitz',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.bold))),
+                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.bold))),
                 const SizedBox(width: 48),
               ]),
             ),
@@ -410,10 +625,40 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
                 _hudItem('⚡', '$_score', AppColors.primaryBlue),
                 _hudItem('🏆', '$_bestScore', AppColors.primaryOrange),
                 _hudItem('🎯', 'Lv $_level', Colors.purpleAccent),
-                if (_combo > 1)
-                  _hudItem('🔥', 'x${1 + (_combo ~/ 3)}', Colors.orange),
+                _hudItem('🌊', 'W$_wave', Colors.cyan),
+                if (_combo > 1) _hudItem('🔥', 'x${1 + (_combo ~/ 3)}', Colors.orange),
               ]),
             ),
+
+            // Boss HP bar
+            if (_bossActive && _bossBall != null)
+              Container(
+                margin: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withAlpha(30),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.withAlpha(100)),
+                ),
+                child: Row(children: [
+                  const Text('💀 BOSS', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: _bossBall!.hp / _bossBall!.maxHp,
+                        backgroundColor: Colors.red.withAlpha(50),
+                        valueColor: const AlwaysStoppedAnimation(Colors.red),
+                        minHeight: 8,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text('${_bossBall!.hp}/${_bossBall!.maxHp}',
+                    style: const TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
+                ]),
+              ),
 
             // Power-up indicator
             if (_activePowerUp != null)
@@ -478,12 +723,22 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
                               powerUps: _powerUps,
                               particles: _particles,
                               trail: _trail,
+                              floatTexts: _floatTexts,
                               score: _score, bestScore: _bestScore, level: _level, lives: _lives,
                               combo: _combo,
                               playing: _playing, gameOver: _gameOver,
                               activePowerUp: _activePowerUp,
                               slowmo: _activePowerUp == 'slowmo',
                               shield: _activePowerUp == 'shield',
+                              fireball: _activePowerUp == 'fireball',
+                              twinkleStars: _twinkleStars,
+                              waveAnnounce: _waveAnnounce,
+                              waveAnnounceTimer: _waveAnnounceTimer,
+                              wave: _wave,
+                              bossBall: _bossBall,
+                              bossFlash: _bossFlash,
+                              levelFlash: _levelFlash,
+                              frameCount: _frameCount,
                             ),
                           ),
                         ),
@@ -509,7 +764,7 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   )
                 : Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Text('💡 Paddle\'ı sürükle | Topa tıkla = ekstra güç | 🔥 combo bonus!',
+                    const Text('💡 Paddle: sürükle | Topa tıkla: ekstra güç | 🔥 combo bonus!',
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                   ]),
             ),
@@ -525,6 +780,7 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
       case 'multi': return Colors.cyan;
       case 'shield': return Colors.purpleAccent;
       case 'slowmo': return Colors.yellow;
+      case 'fireball': return Colors.deepOrange;
       default: return Colors.white;
     }
   }
@@ -535,6 +791,7 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
       case 'multi': return '⚡';
       case 'shield': return '🛡️';
       case 'slowmo': return '⏱️';
+      case 'fireball': return '🔥';
       default: return '💎';
     }
   }
@@ -545,6 +802,7 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
       case 'multi': return 'MULTI-BALL';
       case 'shield': return 'SHIELD ACTIVE';
       case 'slowmo': return 'SLOW-MO';
+      case 'fireball': return 'FIREBALL';
       default: return 'POWER UP';
     }
   }
@@ -552,7 +810,7 @@ class _BallBounceBlitzScreenState extends State<BallBounceBlitzScreen>
   Widget _hudItem(String icon, String val, Color color) {
     return Column(children: [
       Text(icon, style: const TextStyle(fontSize: 16)),
-      Text(val, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
+      Text(val, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold)),
     ]);
   }
 }
@@ -568,6 +826,14 @@ class _EnemyBall {
   int colorIdx;
   _EnemyBall({required this.x, required this.y, required this.vx, required this.vy,
     required this.r, this.angle = 0, this.colorIdx = 0});
+}
+
+class _BossBall {
+  double x, y, vx, vy, r, angle = 0, bobPhase = 0;
+  int hp, maxHp;
+  int flashTimer = 0;
+  _BossBall({required this.x, required this.y, required this.vx, required this.vy,
+    required this.r, required this.hp, required this.maxHp});
 }
 
 class _PowerUp {
@@ -587,7 +853,23 @@ class _Particle {
 class _TrailPoint {
   double x, y, r;
   int life;
-  _TrailPoint({required this.x, required this.y, required this.life, required this.r});
+  Color color;
+  _TrailPoint({required this.x, required this.y, required this.life, required this.r, required this.color});
+}
+
+class _FloatText {
+  String text;
+  double x, y, vy;
+  int life;
+  Color color;
+  double size;
+  _FloatText({required this.text, required this.x, required this.y, required this.vy,
+    required this.life, required this.color, required this.size});
+}
+
+class _TwinkleStar {
+  double x, y, size, phase, speed;
+  _TwinkleStar({required this.x, required this.y, required this.size, required this.phase, required this.speed});
 }
 
 // ---- Painter ----
@@ -598,20 +880,33 @@ class _BlitzPainter extends CustomPainter {
   final List<_PowerUp> powerUps;
   final List<_Particle> particles;
   final List<_TrailPoint> trail;
+  final List<_FloatText> floatTexts;
   final int score, bestScore, level, lives, combo;
   final bool playing, gameOver;
   final String? activePowerUp;
-  final bool slowmo, shield;
+  final bool slowmo, shield, fireball;
+  final List<_TwinkleStar> twinkleStars;
+  final bool waveAnnounce;
+  final int waveAnnounceTimer;
+  final int wave;
+  final _BossBall? bossBall;
+  final bool bossFlash;
+  final bool levelFlash;
+  final int frameCount;
 
   _BlitzPainter({
     required this.paddleX, required this.paddleY, required this.paddleW,
     required this.playerBalls,
     required this.enemyBalls, required this.powerUps, required this.particles,
-    required this.trail,
+    required this.trail, required this.floatTexts,
     required this.score, required this.bestScore, required this.level, required this.lives,
     required this.combo,
     required this.playing, required this.gameOver,
-    this.activePowerUp, this.slowmo = false, this.shield = false,
+    this.activePowerUp, this.slowmo = false, this.shield = false, this.fireball = false,
+    required this.twinkleStars,
+    required this.waveAnnounce, required this.waveAnnounceTimer, required this.wave,
+    this.bossBall, this.bossFlash = false, this.levelFlash = false,
+    required this.frameCount,
   });
 
   static const _enemyColors = [
@@ -632,6 +927,7 @@ class _BlitzPainter extends CustomPainter {
       case 'multi': return Colors.cyan;
       case 'shield': return Colors.purpleAccent;
       case 'slowmo': return Colors.yellow;
+      case 'fireball': return Colors.deepOrange;
       default: return Colors.white;
     }
   }
@@ -642,6 +938,7 @@ class _BlitzPainter extends CustomPainter {
       case 'multi': return '⚡';
       case 'shield': return '🛡️';
       case 'slowmo': return '⏱️';
+      case 'fireball': return '🔥';
       default: return '💎';
     }
   }
@@ -650,14 +947,20 @@ class _BlitzPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
 
-    // Background stars
-    final starPaint = Paint()..color = Colors.white.withAlpha(60);
-    final rng = Random(42);
-    for (int i = 0; i < 40; i++) {
+    // Level flash overlay
+    if (levelFlash) {
+      canvas.drawRect(Rect.fromLTWH(0, 0, w, h),
+        Paint()..color = Colors.yellow.withAlpha(40 * (levelFlash ? 1 : 0)));
+    }
+
+    // Twinkling stars
+    for (final star in twinkleStars) {
+      final brightness = 0.3 + 0.7 * ((sin(frameCount * star.speed + star.phase) + 1) / 2);
+      final alpha = (brightness * 180).clamp(0.0, 255.0).toInt();
       canvas.drawCircle(
-        Offset(rng.nextDouble() * w, rng.nextDouble() * h * 0.75),
-        0.8 + rng.nextDouble() * 1.2,
-        starPaint,
+        Offset(star.x * w, star.y * h),
+        star.size,
+        Paint()..color = Colors.white.withAlpha(alpha),
       );
     }
 
@@ -685,7 +988,6 @@ class _BlitzPainter extends CustomPainter {
         ),
         shieldPaint,
       );
-      // Animated shield shimmer
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(px - 6, py - 6, pw + 12, ph + 12),
@@ -701,7 +1003,7 @@ class _BlitzPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(t.x * w, t.y * h),
         t.r * w * (t.life / 18),
-        Paint()..color = AppColors.primaryBlue.withAlpha(alpha),
+        Paint()..color = t.color.withAlpha(alpha),
       );
     }
 
@@ -719,10 +1021,8 @@ class _BlitzPainter extends CustomPainter {
     for (final p in powerUps) {
       final px = p.x * w, py = p.y * h;
       final glowColor = _getPowerUpGlowColor(p.type);
-      // Outer glow
       canvas.drawCircle(Offset(px, py), 22, Paint()..color = glowColor.withAlpha(40));
       canvas.drawCircle(Offset(px, py), 18, Paint()..color = glowColor.withAlpha(60));
-      // Inner
       canvas.drawCircle(Offset(px, py), 14, Paint()..color = glowColor);
       final text = _getPowerUpSymbol(p.type);
       final tp = TextPainter(text: TextSpan(text: text, style: const TextStyle(fontSize: 14)),
@@ -734,16 +1034,20 @@ class _BlitzPainter extends CustomPainter {
     for (final e in enemyBalls) {
       final ex = e.x * w, ey = e.y * h, er = e.r * w;
       final color = _enemyColors[e.colorIdx % _enemyColors.length];
-      // Shadow
-      canvas.drawCircle(Offset(ex + 2, ey + 2), er, Paint()..color = Colors.black.withAlpha(40));
-      // Body
+      // Glow
+      canvas.drawCircle(Offset(ex, ey), er * 1.4, Paint()..color = color.withAlpha(30));
       canvas.drawCircle(Offset(ex, ey), er, Paint()..color = color);
-      // Outline
-      canvas.drawCircle(Offset(ex, ey), er, Paint()..color = Colors.black..style = PaintingStyle.stroke..strokeWidth = 2);
+      canvas.drawCircle(Offset(ex, ey), er, Paint()
+        ..color = Colors.black
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2);
       // Angry face
       canvas.save();
       canvas.translate(ex, ey);
-      final facePaint = Paint()..color = Colors.white..strokeWidth = 2..strokeCap = StrokeCap.round;
+      final facePaint = Paint()
+        ..color = Colors.white
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round;
       canvas.drawLine(Offset(-er * 0.3, -er * 0.1), Offset(-er * 0.1, er * 0.1), facePaint);
       canvas.drawLine(Offset(er * 0.3, -er * 0.1), Offset(er * 0.1, er * 0.1), facePaint);
       canvas.drawArc(Rect.fromCenter(center: Offset(0, er * 0.3), width: er * 0.6, height: er * 0.3),
@@ -751,15 +1055,66 @@ class _BlitzPainter extends CustomPainter {
       canvas.restore();
     }
 
+    // Boss Ball
+    if (bossBall != null) {
+      final boss = bossBall;
+      final bx = boss!.x * w;
+      final by = (boss.y + sin(boss.bobPhase) * 0.015) * h;
+      final br = boss.r * w;
+      final bossColor = boss.flashTimer > 0 ? Colors.white : const Color(0xFF8B0000);
+      // Pulsing outer glow
+      canvas.drawCircle(Offset(bx, by), br * 2.0, Paint()..color = Colors.red.withAlpha(20));
+      canvas.drawCircle(Offset(bx, by), br * 1.5, Paint()..color = Colors.red.withAlpha(30));
+      // Shadow
+      canvas.drawCircle(Offset(bx + 3, by + 3), br, Paint()..color = Colors.black.withAlpha(50));
+      // Body
+      canvas.drawCircle(Offset(bx, by), br, Paint()..color = bossColor);
+      // Skull pattern
+      canvas.save();
+      canvas.translate(bx, by);
+      final sk = Paint()..color = Colors.black87;
+      // Eyes
+      canvas.drawOval(Rect.fromCenter(center: Offset(-br * 0.25, -br * 0.1), width: br * 0.35, height: br * 0.4), sk);
+      canvas.drawOval(Rect.fromCenter(center: Offset(br * 0.25, -br * 0.1), width: br * 0.35, height: br * 0.4), sk);
+      // Nose
+      final nosePath = Path()
+        ..moveTo(0, 0)
+        ..lineTo(-br * 0.1, br * 0.15)
+        ..lineTo(br * 0.1, br * 0.15)
+        ..close();
+      canvas.drawPath(nosePath, sk);
+      // Teeth
+      for (int i = -2; i <= 2; i++) {
+        canvas.drawRect(Rect.fromLTWH(i * br * 0.18, br * 0.25, br * 0.12, br * 0.2), sk);
+      }
+      canvas.restore();
+      canvas.drawCircle(Offset(bx, by), br, Paint()..color = Colors.black..style = PaintingStyle.stroke..strokeWidth = 2);
+    }
+
     // Player balls
     for (int bi = 0; bi < playerBalls.length; bi++) {
       final b = playerBalls[bi];
-      final bx = b.x * w, by = b.y * h, br = _ballR * w;
-      final ballColor = _ballColors[bi % _ballColors.length];
+      final bx = b.x * w, by = b.y * h, br = 0.04 * w;
+      final ballColor = fireball
+          ? Colors.deepOrange
+          : _ballColors[bi % _ballColors.length];
 
       // Glow
       canvas.drawCircle(Offset(bx, by), br * 1.8, Paint()..color = ballColor.withAlpha(30));
       canvas.drawCircle(Offset(bx, by), br * 1.3, Paint()..color = ballColor.withAlpha(20));
+
+      // Fireball flame effect
+      if (fireball) {
+        final flameRng = Random(bi * 100 + frameCount);
+        for (int fi = 0; fi < 5; fi++) {
+          final fa = flameRng.nextDouble() * 2 * pi;
+          final fr = br * 0.8 + flameRng.nextDouble() * br * 0.8;
+          final fx = bx + cos(fa) * fr;
+          final fy = by + sin(fa) * fr;
+          canvas.drawCircle(Offset(fx, fy), br * 0.4,
+            Paint()..color = [Colors.orange, Colors.yellow, Colors.red][fi % 3].withAlpha(100));
+        }
+      }
 
       // Shadow
       canvas.drawCircle(Offset(bx + 1, by + 1), br, Paint()..color = Colors.black.withAlpha(30));
@@ -791,13 +1146,14 @@ class _BlitzPainter extends CustomPainter {
     final px = paddleX * w - pw / 2, py = paddleY * h - ph / 2;
     final paddleGrad = LinearGradient(
       colors: shield
-        ? [Colors.purpleAccent, const Color(0xFF8E44AD)]
-        : [AppColors.primaryBlue, const Color(0xFF2980B9)],
+          ? [Colors.purpleAccent, const Color(0xFF8E44AD)]
+          : fireball
+              ? [Colors.deepOrange, Colors.red]
+              : [AppColors.primaryBlue, const Color(0xFF2980B9)],
     ).createShader(Rect.fromLTWH(px, py, pw, ph));
     final paddleRect = RRect.fromRectAndRadius(Rect.fromLTWH(px, py, pw, ph), const Radius.circular(8));
     canvas.drawRRect(paddleRect, Paint()..shader = paddleGrad);
     canvas.drawRRect(paddleRect, Paint()..color = Colors.white.withAlpha(60)..style = PaintingStyle.stroke..strokeWidth = 1.5);
-    // Paddle shine
     canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(px + 4, py + 2, pw * 0.4, 4), const Radius.circular(2)),
       Paint()..color = Colors.white.withAlpha(80));
 
@@ -811,6 +1167,14 @@ class _BlitzPainter extends CustomPainter {
       canvas.drawRect(Rect.fromLTWH(0, 0, w, h), vignettePaint);
     }
 
+    // Wave announcement
+    if (waveAnnounce) {
+      final alpha = (waveAnnounceTimer > 60
+          ? ((90 - waveAnnounceTimer) / 30 * 255).clamp(0.0, 255.0)
+          : (waveAnnounceTimer / 60 * 255)).clamp(0.0, 255.0).toInt();
+      _text(canvas, '🌊 WAVE $wave', w / 2, h * 0.12, 22, Colors.cyan.withAlpha(alpha));
+    }
+
     // Score popup
     if (score > 0 && playing) {
       final mult = 1 + (combo ~/ 3);
@@ -819,32 +1183,34 @@ class _BlitzPainter extends CustomPainter {
       _text(canvas, '+$score$extra', w * 0.85, h * 0.06, 13 + min(score.toDouble(), 8) * 0.3, color);
     }
 
-    // Level up flash
-    if (playing && score > 0 && score % 15 == 0) {
-      _text(canvas, '🎯 LEVEL UP! Lv $level', w / 2, h * 0.18, 20, Colors.yellow.shade300);
+    // Float texts
+    for (final ft in floatTexts) {
+      final alpha = (ft.life * 6).clamp(0, 255).toInt();
+      _text(canvas, ft.text, ft.x * w, ft.y * h, ft.size, ft.color.withAlpha(alpha));
     }
 
     // Overlay: Start
     if (!playing && !gameOver) {
       canvas.drawRect(Rect.fromLTWH(0, 0, w, h), Paint()..color = Colors.black45);
-      _text(canvas, '⚡ Ball Bounce Blitz', w / 2, h * 0.30, 24, Colors.white);
-      _text(canvas, 'Paddle\'ı sürekle, düşmanlardan kaçın', w / 2, h * 0.43, 13, Colors.white70);
-      _text(canvas, 'Power-up\'ları topla! 🛡️⚡❤️⏱️', w / 2, h * 0.51, 13, Colors.cyan);
-      _text(canvas, '🔥 Combo ile bonus puan kazan!', w / 2, h * 0.59, 13, Colors.orange);
-      _text(canvas, 'Başlamak için ▶ butonuna tıkla', w / 2, h * 0.70, 12, Colors.white54);
+      _text(canvas, '⚡ Ball Bounce Blitz', w / 2, h * 0.25, 24, Colors.white);
+      _text(canvas, '🎯 YENİ: Wave System + Boss Ball!', w / 2, h * 0.37, 12, Colors.cyan);
+      _text(canvas, 'Paddle\'ı sürekle, düşmanlardan kaçın', w / 2, h * 0.47, 13, Colors.white70);
+      _text(canvas, '🔥 Combo ile bonus puan kazan!', w / 2, h * 0.55, 13, Colors.orange);
+      _text(canvas, '💀 Her 5 seviyede BOSS çıkıyor!', w / 2, h * 0.63, 13, Colors.red.shade300);
+      _text(canvas, 'Başlamak için ▶ butonuna tıkla', w / 2, h * 0.73, 12, Colors.white54);
     }
 
     // Overlay: Game Over
     if (gameOver) {
       canvas.drawRect(Rect.fromLTWH(0, 0, w, h), Paint()..color = Colors.black60);
-      _text(canvas, '💥 Oyun Bitti!', w / 2, h * 0.30, 28, Colors.red.shade300);
-      _text(canvas, 'Skor: $score  |  Seviye: $level', w / 2, h * 0.43, 16, Colors.white);
-      _text(canvas, 'En İyi: $bestScore', w / 2, h * 0.52, 14, AppColors.primaryOrange);
+      _text(canvas, '💥 Oyun Bitti!', w / 2, h * 0.25, 28, Colors.red.shade300);
+      _text(canvas, 'Skor: $score  |  Seviye: $level', w / 2, h * 0.38, 16, Colors.white);
+      _text(canvas, 'En İyi: $bestScore', w / 2, h * 0.47, 14, AppColors.primaryOrange);
       if (combo > 0) {
-        _text(canvas, 'Max Combo: 🔥 x${1 + (combo ~/ 3)}', w / 2, h * 0.60, 13, Colors.orange);
+        _text(canvas, 'Max Combo: 🔥 x${1 + (combo ~/ 3)}', w / 2, h * 0.55, 13, Colors.orange);
       }
       if (score >= bestScore && score > 0) {
-        _text(canvas, '🎉 Yeni Rekor!', w / 2, h * 0.68, 18, Colors.yellow.shade300);
+        _text(canvas, '🎉 Yeni Rekor!', w / 2, h * 0.63, 18, Colors.yellow.shade300);
       }
     }
   }
